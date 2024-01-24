@@ -1,4 +1,4 @@
-
+build/
 .vscode/settings.json
 bartpy.egg-info/dependency_links.txt
 bartpy.egg-info/PKG-INFO

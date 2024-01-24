@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.base import RegressorMixin, clone
-from sklearn.linear_model.base import LinearRegression
+from sklearn.linear_model import LinearRegression
 
 from bartpy.sklearnmodel import SklearnModel
 

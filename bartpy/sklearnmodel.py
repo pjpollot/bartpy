@@ -205,7 +205,7 @@ class SklearnModel(BaseEstimator, RegressorMixin):
         """
         return [delayed_run_chain() for _ in range(self.n_chains)]
 
-    def predict(self, X: np.ndarray=None) -> np.ndarray:
+    def predict(self, X: np.ndarray=None, return_samples: bool=False) -> np.ndarray:
         """
         Predict the target corresponding to the provided covariate matrix
         If X is None, will predict based on training covariates
@@ -216,6 +216,8 @@ class SklearnModel(BaseEstimator, RegressorMixin):
         ----------
         X: pd.DataFrame
             covariates to predict from
+        return_samples: bool
+            whether to return the full prediction samples
 
         Returns
         -------
@@ -223,12 +225,15 @@ class SklearnModel(BaseEstimator, RegressorMixin):
             predictions for the X covariates
         """
         if X is None and self.store_in_sample_predictions:
-            return self.data.y.unnormalize_y(np.mean(self._prediction_samples, axis=0))
+            if not return_samples:
+                return self.data.y.unnormalize_y(np.mean(self._prediction_samples, axis=0))
+            else:
+                return np.array([self.data.y.unnormalize_y(x) for x in self._prediction_samples])
         elif X is None and not self.store_in_sample_predictions:
             raise ValueError(
                 "In sample predictions only possible if model.store_in_sample_predictions is `True`.  Either set the parameter to True or pass a non-None X parameter")
         else:
-            return self._out_of_sample_predict(X)
+            return self._out_of_sample_predict(X, return_samples)
 
     def residuals(self, X=None, y=None) -> np.ndarray:
         """
@@ -287,15 +292,19 @@ class SklearnModel(BaseEstimator, RegressorMixin):
         """
         return np.sqrt(np.sum(self.l2_error(X, y)))
 
-    def _out_of_sample_predict(self, X):
-        return self.data.y.unnormalize_y(np.mean([x.predict(X) for x in self._model_samples], axis=0))
+    def _out_of_sample_predict(self, X, return_samples: bool=False) -> np.ndarray:
+        preds = [x.predict(X) for x in self._model_samples]
+        if not return_samples:
+            return self.data.y.unnormalize_y(np.mean(preds, axis=0))
+        else: 
+            return np.array([self.data.y.unnormalize_y(x) for x in preds])
 
-    def fit_predict(self, X, y):
+    def fit_predict(self, X, y, return_samples: bool=False):
         self.fit(X, y)
         if self.store_in_sample_predictions:
-            return self.predict()
+            return self.predict(return_samples=return_samples)
         else:
-            return self.predict(X)
+            return self.predict(X, return_samples)
 
     @property
     def model_samples(self) -> List[Model]:

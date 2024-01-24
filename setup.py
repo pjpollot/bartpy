@@ -16,6 +16,7 @@ setup(
         'matplotlib',
         'numpy',
         'pandas',
+        'pyarrow',
         'scipy',
         'seaborn',
         'scikit-learn',
